@@ -21,7 +21,7 @@ export function TitleBar({ onSettings }: Props) {
   return (
     <div style={{ ...styles.bar, background: theme.bgSecondary, borderBottomColor: theme.border }}>
       <div style={styles.dragArea}>
-        <span style={{ ...styles.title, color: theme.text }}>EMR Assistant</span>
+        <span style={{ ...styles.title, color: theme.text }}>EMR Assistant v1.0</span>
       </div>
       <div style={styles.controls}>
         <button
