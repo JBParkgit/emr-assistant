@@ -180,6 +180,19 @@ function registerMacroHotkeys(): void {
   }
 }
 
+// Prevent multiple instances
+const gotTheLock = app.requestSingleInstanceLock()
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (!mainWindow.isVisible()) mainWindow.show()
+      mainWindow.focus()
+    }
+  })
+}
+
 app.whenReady().then(() => {
   macroStore = new MacroStore()
   setupIPC()
