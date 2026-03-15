@@ -1,0 +1,40 @@
+{
+  "macros": [
+    {
+      "id": "sample-1",
+      "title": "초진 인사",
+      "content": "안녕하세요. 처음 오셨군요.\n어디가 불편하셔서 오셨나요?",
+      "order": 0
+    },
+    {
+      "id": "sample-2",
+      "title": "knee ROM",
+      "content": "ROM: Flexion {{input:굴곡}}° / Extension {{input:신전}}°\nVarus/Valgus stress: stable\nAnterior/Posterior drawer: negative\nMcMurray test: negative",
+      "order": 1
+    },
+    {
+      "id": "sample-3",
+      "title": "shoulder ROM",
+      "content": "ROM: FF {{input:FF}}° / ABD {{input:ABD}}° / ER {{input:ER}}° / IR {{input:IR}}°\nNeer test: negative\nHawkins test: negative\nEmpty can test: negative\nSpeed test: negative",
+      "order": 2
+    },
+    {
+      "id": "sample-4",
+      "title": "OA knee Dx",
+      "content": "Osteoarthritis, both knees\nK-L grade: Rt {{input:Rt grade}}  / Lt {{input:Lt grade}}",
+      "order": 3
+    },
+    {
+      "id": "sample-5",
+      "title": "물리치료 처방",
+      "content": "1. 물리치료 (HP, TENS, US) - {{input:물리치료 일수}}일\n2. 운동치료 (ROM ex, strengthening) - {{input:운동치료 일수}}일",
+      "order": 4
+    },
+    {
+      "id": "sample-6",
+      "title": "수술 후 경과",
+      "content": "수술 후 {{input:수술 후 일수}}일째\nWound: clean & dry\nROM: {{input:ROM}}°\nPain VAS: {{input:VAS}}/10",
+      "order": 5
+    }
+  ]
+}
