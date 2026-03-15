@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../ThemeContext'
 
 export interface InputField {
+  type: 'input' | 'select'
   label: string
   placeholder: string
+  options?: string[]  // for select fields
 }
 
 interface Props {
@@ -13,15 +15,31 @@ interface Props {
 }
 
 export function extractInputFields(content: string): InputField[] {
-  const regex = /\{\{input:([^}]+)\}\}/g
   const fields: InputField[] = []
   const seen = new Set<string>()
+
+  // Match {{input:label}} and {{select:label:opt1,opt2,opt3}}
+  const regex = /\{\{(input|select):([^}]+)\}\}/g
   let match: RegExpExecArray | null
   while ((match = regex.exec(content)) !== null) {
-    const label = match[1].trim()
-    if (!seen.has(label)) {
-      seen.add(label)
-      fields.push({ label, placeholder: label })
+    const type = match[1] as 'input' | 'select'
+    const raw = match[2]
+
+    if (type === 'select') {
+      const colonIdx = raw.indexOf(':')
+      if (colonIdx === -1) continue
+      const label = raw.substring(0, colonIdx).trim()
+      const options = raw.substring(colonIdx + 1).split(',').map((o) => o.trim()).filter(Boolean)
+      if (!seen.has(label) && options.length > 0) {
+        seen.add(label)
+        fields.push({ type: 'select', label, placeholder: label, options })
+      }
+    } else {
+      const label = raw.trim()
+      if (!seen.has(label)) {
+        seen.add(label)
+        fields.push({ type: 'input', label, placeholder: label })
+      }
     }
   }
   return fields
@@ -30,7 +48,10 @@ export function extractInputFields(content: string): InputField[] {
 export function applyInputValues(content: string, values: Record<string, string>): string {
   let result = content
   for (const [label, value] of Object.entries(values)) {
+    // Replace {{input:label}}
     result = result.replace(new RegExp(`\\{\\{input:${escapeRegex(label)}\\}\\}`, 'g'), value)
+    // Replace {{select:label:...}} — match the label part, any options
+    result = result.replace(new RegExp(`\\{\\{select:${escapeRegex(label)}:[^}]+\\}\\}`, 'g'), value)
   }
   return result
 }
@@ -43,10 +64,12 @@ export function InputPrompt({ fields, onSubmit, onCancel }: Props) {
   const { theme } = useTheme()
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
-    fields.forEach((f) => (init[f.label] = ''))
+    fields.forEach((f) => {
+      init[f.label] = f.type === 'select' && f.options?.length ? f.options[0] : ''
+    })
     return init
   })
-  const firstRef = useRef<HTMLInputElement>(null)
+  const firstRef = useRef<HTMLInputElement | HTMLSelectElement>(null)
 
   useEffect(() => {
     firstRef.current?.focus()
@@ -58,7 +81,7 @@ export function InputPrompt({ fields, onSubmit, onCancel }: Props) {
 
   const allFilled = fields.every((f) => values[f.label].trim() !== '')
 
-  const inputStyle: React.CSSProperties = {
+  const controlStyle: React.CSSProperties = {
     background: theme.inputBg,
     border: `1px solid ${theme.inputBorder}`,
     borderRadius: 6,
@@ -80,17 +103,34 @@ export function InputPrompt({ fields, onSubmit, onCancel }: Props) {
           {fields.map((f, i) => (
             <div key={f.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={{ fontSize: 12, color: theme.textDim, fontWeight: 600 }}>{f.label}</label>
-              <input
-                ref={i === 0 ? firstRef : undefined}
-                style={inputStyle}
-                value={values[f.label]}
-                onChange={(e) => setValues((v) => ({ ...v, [f.label]: e.target.value }))}
-                placeholder={f.placeholder}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && allFilled) handleSubmit()
-                  if (e.key === 'Escape') onCancel()
-                }}
-              />
+              {f.type === 'select' ? (
+                <select
+                  ref={i === 0 ? (firstRef as React.Ref<HTMLSelectElement>) : undefined}
+                  style={controlStyle}
+                  value={values[f.label]}
+                  onChange={(e) => setValues((v) => ({ ...v, [f.label]: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && allFilled) handleSubmit()
+                    if (e.key === 'Escape') onCancel()
+                  }}
+                >
+                  {f.options!.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  ref={i === 0 ? (firstRef as React.Ref<HTMLInputElement>) : undefined}
+                  style={controlStyle}
+                  value={values[f.label]}
+                  onChange={(e) => setValues((v) => ({ ...v, [f.label]: e.target.value }))}
+                  placeholder={f.placeholder}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && allFilled) handleSubmit()
+                    if (e.key === 'Escape') onCancel()
+                  }}
+                />
+              )}
             </div>
           ))}
         </div>

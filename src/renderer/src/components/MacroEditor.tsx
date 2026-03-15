@@ -16,8 +16,9 @@ export function MacroEditor({ macro, allMacros = [], onSave, onClose }: Props) {
   const [title, setTitle] = useState(macro?.title || '')
   const [content, setContent] = useState(macro?.content || '')
   const [hotkey, setHotkey] = useState(macro?.hotkey || '')
-  const [showFieldInput, setShowFieldInput] = useState(false)
+  const [showFieldInput, setShowFieldInput] = useState<'input' | 'select' | false>(false)
   const [fieldName, setFieldName] = useState('')
+  const [fieldOptions, setFieldOptions] = useState('')
   const fieldInputRef = useRef<HTMLInputElement>(null)
 
   const hotkeyConflict = hotkey
@@ -47,17 +48,34 @@ export function MacroEditor({ macro, allMacros = [], onSave, onClose }: Props) {
   }
 
   const handleInsertInput = () => {
-    setShowFieldInput(true)
+    setShowFieldInput('input')
     setFieldName('')
     requestAnimationFrame(() => fieldInputRef.current?.focus())
   }
 
+  const handleInsertSelect = () => {
+    setShowFieldInput('select')
+    setFieldName('')
+    setFieldOptions('')
+    requestAnimationFrame(() => fieldInputRef.current?.focus())
+  }
+
   const confirmFieldInsert = () => {
-    if (fieldName.trim()) {
+    if (!fieldName.trim()) {
+      setShowFieldInput(false)
+      return
+    }
+    if (showFieldInput === 'select') {
+      const opts = fieldOptions.trim()
+      if (opts) {
+        insertAtCursor(`{{select:${fieldName.trim()}:${opts}}}`)
+      }
+    } else {
       insertAtCursor(`{{input:${fieldName.trim()}}}`)
     }
     setShowFieldInput(false)
     setFieldName('')
+    setFieldOptions('')
   }
 
   const handleHotkeyCapture = (e: React.KeyboardEvent) => {
@@ -154,39 +172,49 @@ export function MacroEditor({ macro, allMacros = [], onSave, onClose }: Props) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
             <label style={{ fontSize: 11, color: theme.textDim, fontWeight: 600 }}>내용</label>
             <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-              {showFieldInput ? (
+              {!showFieldInput && (
                 <>
-                  <input
-                    ref={fieldInputRef}
-                    style={{
-                      background: theme.inputBg,
-                      border: `1px solid ${theme.accent}`,
-                      borderRadius: 4,
-                      color: theme.text,
-                      fontSize: 11,
-                      padding: '2px 6px',
-                      outline: 'none',
-                      width: 100
-                    }}
-                    value={fieldName}
-                    onChange={(e) => setFieldName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') confirmFieldInsert()
-                      if (e.key === 'Escape') { setShowFieldInput(false); setFieldName('') }
-                    }}
-                    placeholder="필드 이름"
-                  />
-                  <button style={{ ...styles.insertBtn, background: theme.accent, color: theme.accentText }} onClick={confirmFieldInsert}>
-                    삽입
+                  <button style={{ ...styles.insertBtn, background: theme.bgTertiary, color: theme.accent }} onClick={handleInsertInput} title="입력 필드 삽입">
+                    + 입력
+                  </button>
+                  <button style={{ ...styles.insertBtn, background: theme.bgTertiary, color: theme.success }} onClick={handleInsertSelect} title="선택 필드 삽입">
+                    + 선택
                   </button>
                 </>
-              ) : (
-                <button style={{ ...styles.insertBtn, background: theme.bgTertiary, color: theme.accent }} onClick={handleInsertInput} title="입력 필드 삽입">
-                  + 입력필드
-                </button>
               )}
             </div>
           </div>
+          {showFieldInput && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, background: theme.bgSecondary, borderRadius: 6, padding: '6px 8px' }}>
+              <input
+                ref={fieldInputRef}
+                style={{ background: theme.inputBg, border: `1px solid ${theme.accent}`, borderRadius: 4, color: theme.text, fontSize: 11, padding: '3px 6px', outline: 'none' }}
+                value={fieldName}
+                onChange={(e) => setFieldName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') confirmFieldInsert()
+                  if (e.key === 'Escape') { setShowFieldInput(false); setFieldName(''); setFieldOptions('') }
+                }}
+                placeholder="필드 이름"
+              />
+              {showFieldInput === 'select' && (
+                <input
+                  style={{ background: theme.inputBg, border: `1px solid ${theme.accent}`, borderRadius: 4, color: theme.text, fontSize: 11, padding: '3px 6px', outline: 'none' }}
+                  value={fieldOptions}
+                  onChange={(e) => setFieldOptions(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') confirmFieldInsert()
+                    if (e.key === 'Escape') { setShowFieldInput(false); setFieldName(''); setFieldOptions('') }
+                  }}
+                  placeholder="옵션 (쉼표 구분: improved,stationary,aggravated)"
+                />
+              )}
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button style={{ ...styles.insertBtn, background: theme.accent, color: theme.accentText }} onClick={confirmFieldInsert}>삽입</button>
+                <button style={{ ...styles.insertBtn, background: theme.bgTertiary, color: theme.textDim }} onClick={() => { setShowFieldInput(false); setFieldName(''); setFieldOptions('') }}>취소</button>
+              </div>
+            </div>
+          )}
           <textarea
             ref={textareaRef}
             style={{

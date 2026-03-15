@@ -33,8 +33,9 @@
     "appId": "com.emr-assistant.app",
     "productName": "EMR Assistant",
     "win": {
-      "target": "nsis",
-      "icon": "resources/icon.ico"
+      "target": "dir",
+      "icon": "resources/icon.ico",
+      "artifactName": "emr_assistant.exe"
     },
     "nsis": {
       "oneClick": false,

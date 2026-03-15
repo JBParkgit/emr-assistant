@@ -160,7 +160,7 @@ function registerMacroHotkeys(): void {
   for (const macro of data.macros) {
     if (!macro.hotkey) continue
     try {
-      const hasInputFields = /\{\{input:[^}]+\}\}/.test(macro.content)
+      const hasInputFields = /\{\{(input|select):[^}]+\}\}/.test(macro.content)
       const success = globalShortcut.register(macro.hotkey, async () => {
         if (hasInputFields && mainWindow) {
           // Show window and let renderer handle input prompts
